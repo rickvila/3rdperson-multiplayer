@@ -155,7 +155,7 @@ func world_ready():
 remote func clean_players():
 	if (!world):
 		return;
-	for i in world.get_node(players_path):
+	for i in world.get_node(players_path).get_children():
 		i.queue_free();
 
 sync func spawn_player(id, name, pos = null):
