@@ -17,10 +17,13 @@ func _btnHost_pressed():
 	var name = get_node("lnName").get_text();
 	var port = get_node("lnPort").get_text().to_int();
 	var maxcl = get_node("lnMaxPlayers").get_text().to_int();
+	var dedicated = get_node("chkDedicated").is_pressed();
 	
-	gamestate.sv_dedicated = get_node("chkDedicated").is_pressed();
+	gamestate.sv_dedicated = dedicated;
 	gamestate.cl_name = name;
-	gamestate.host_game(port, maxcl);
+	
+	if (!gamestate.host_game(port, maxcl)):
+		return;
 	
 	disable_control();
 
@@ -31,16 +34,21 @@ func host_dedicated_server():
 	
 	gamestate.sv_dedicated = true;
 	gamestate.cl_name = name;
-	gamestate.host_game(port, maxcl);
+	
+	if (!gamestate.host_game(port, maxcl)):
+		return;
+	
+	disable_control();
 
 func _btnConnect_pressed():
 	var name = get_node("lnName").get_text();
 	var ip = get_node("lnIP").get_text();
 	var port = get_node("lnPort").get_text().to_int();
 	
-	gamestate.cl_name = name;
-	gamestate.join_game(ip, port);
+	if (!gamestate.join_game(ip, port)):
+		return;
 	
+	gamestate.cl_name = name;
 	disable_control();
 
 func disable_control():

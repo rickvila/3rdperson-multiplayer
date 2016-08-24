@@ -1,12 +1,13 @@
-[gd_scene load_steps=15 format=1]
+[gd_scene load_steps=17 format=1]
 
 [ext_resource path="res://scripts/world.gd" type="Script" id=1]
 [ext_resource path="res://scripts/ui_objectsname.gd" type="Script" id=2]
 [ext_resource path="res://fonts/OpenSans-Regular.ttf" type="DynamicFontData" id=3]
 [ext_resource path="res://scripts/ui_chatbox.gd" type="Script" id=4]
 [ext_resource path="res://sprites/white.png" type="Texture" id=5]
-[ext_resource path="res://cubemap/skybox.cbm" type="CubeMap" id=6]
-[ext_resource path="res://prefabs/cube.tscn" type="PackedScene" id=7]
+[ext_resource path="res://sprites/crosshair.png" type="Texture" id=6]
+[ext_resource path="res://cubemap/skybox.cbm" type="CubeMap" id=7]
+[ext_resource path="res://prefabs/cube.tscn" type="PackedScene" id=8]
 
 [sub_resource type="DynamicFont" id=1]
 
@@ -46,7 +47,14 @@ tracks/0/interp = 1
 tracks/0/imported = false
 tracks/0/keys = { "times":FloatArray( 0, 2, 2.5 ), "transitions":FloatArray( 1, 1, 1 ), "update":0, "values":[ 1.0, 1.0, 0.5 ] }
 
-[sub_resource type="Environment" id=5]
+[sub_resource type="DynamicFont" id=5]
+
+font/size = 24
+font/use_mipmaps = false
+font/use_filter = true
+font/font = ExtResource( 3 )
+
+[sub_resource type="Environment" id=6]
 
 ambient_light/enabled = true
 ambient_light/color = Color( 1, 1, 1, 1 )
@@ -54,7 +62,7 @@ ambient_light/energy = 0.6
 fxaa/enabled = false
 background/mode = 4
 background/color = Color( 0, 0, 0, 1 )
-background/cubemap = ExtResource( 6 )
+background/cubemap = ExtResource( 7 )
 background/energy = 1.0
 background/scale = 1.0
 background/glow = 0.0
@@ -91,7 +99,7 @@ bcs/contrast = 1.0
 bcs/saturation = 1.0
 srgb/enabled = false
 
-[sub_resource type="FixedMaterial" id=6]
+[sub_resource type="FixedMaterial" id=7]
 
 flags/visible = true
 flags/double_sided = false
@@ -128,7 +136,7 @@ textures/glow_tc = 0
 textures/normal_tc = 0
 textures/shade_param_tc = 0
 
-[sub_resource type="BoxShape" id=7]
+[sub_resource type="BoxShape" id=8]
 
 extents = Vector3( 50, 1, 50 )
 
@@ -248,10 +256,97 @@ playback/speed = 1.0
 blend_times = [  ]
 autoplay = ""
 
+[node name="healthbar" type="Control" parent="gui"]
+
+editor/display_folded = true
+anchor/left = 1
+anchor/top = 1
+anchor/right = 1
+anchor/bottom = 1
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 114.0
+margin/top = 60.0
+margin/right = 24.0
+margin/bottom = 20.0
+
+[node name="bg" type="TextureFrame" parent="gui/healthbar"]
+
+anchor/right = 1
+anchor/bottom = 1
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 0.0
+margin/top = 0.0
+margin/right = 0.0
+margin/bottom = 0.0
+texture = ExtResource( 5 )
+modulate = Color( 0.078125, 0.078125, 0.078125, 0.653266 )
+expand = true
+stretch_mode = 0
+
+[node name="health" type="Label" parent="gui/healthbar"]
+
+anchor/right = 1
+anchor/bottom = 1
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 0
+margin/left = 0.0
+margin/top = 0.0
+margin/right = 0.0
+margin/bottom = 0.0
+custom_fonts/font = SubResource( 5 )
+custom_colors/font_color = Color( 1, 1, 1, 1 )
+text = "000"
+align = 1
+valign = 1
+percent_visible = 1.0
+lines_skipped = 0
+max_lines_visible = -1
+
+[node name="crosshair" type="Control" parent="gui"]
+
+editor/display_folded = true
+anchor/left = 3
+anchor/top = 3
+anchor/right = 3
+anchor/bottom = 3
+focus/ignore_mouse = false
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 24.0
+margin/top = 24.0
+margin/right = -24.0
+margin/bottom = -24.0
+
+[node name="tex" type="TextureFrame" parent="gui/crosshair"]
+
+anchor/right = 1
+anchor/bottom = 1
+focus/ignore_mouse = true
+focus/stop_mouse = true
+size_flags/horizontal = 2
+size_flags/vertical = 2
+margin/left = 0.0
+margin/top = 0.0
+margin/right = 0.0
+margin/bottom = 0.0
+texture = ExtResource( 6 )
+modulate = Color( 0.525299, 1, 0.00390625, 1 )
+expand = true
+stretch_mode = 0
+
 [node name="env" type="WorldEnvironment" parent="."]
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
-environment = SubResource( 5 )
+environment = SubResource( 6 )
 
 [node name="sun" type="DirectionalLight" parent="env"]
 
@@ -283,7 +378,7 @@ editor/display_folded = true
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 layers = 1
 geometry/visible = true
-geometry/material_override = SubResource( 6 )
+geometry/material_override = SubResource( 7 )
 geometry/cast_shadow = 1
 geometry/receive_shadows = true
 geometry/range_begin = 0.0
@@ -306,7 +401,7 @@ _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 input/ray_pickable = true
 input/capture_on_drag = false
 shape_count = 1
-shapes/0/shape = SubResource( 7 )
+shapes/0/shape = SubResource( 8 )
 shapes/0/transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0 )
 shapes/0/trigger = false
 collision/layers = 1
@@ -320,7 +415,7 @@ constant_angular_velocity = Vector3( 0, 0, 0 )
 
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0 )
-shape = SubResource( 7 )
+shape = SubResource( 8 )
 trigger = false
 _update_shape_index = 0
 
@@ -329,23 +424,23 @@ _update_shape_index = 0
 editor/display_folded = true
 _import_transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 
-[node name="cube" parent="env/props" instance=ExtResource( 7 )]
+[node name="cube" parent="env/props" instance=ExtResource( 8 )]
 
 transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -6 )
 
-[node name="cube1" parent="env/props" instance=ExtResource( 7 )]
+[node name="cube1" parent="env/props" instance=ExtResource( 8 )]
 
 transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, -6 )
 
-[node name="cube2" parent="env/props" instance=ExtResource( 7 )]
+[node name="cube2" parent="env/props" instance=ExtResource( 8 )]
 
 transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1, 0 )
 
-[node name="cube3" parent="env/props" instance=ExtResource( 7 )]
+[node name="cube3" parent="env/props" instance=ExtResource( 8 )]
 
 transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1, 3 )
 
-[node name="cube4" parent="env/props" instance=ExtResource( 7 )]
+[node name="cube4" parent="env/props" instance=ExtResource( 8 )]
 
 transform/local = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, 3 )
 

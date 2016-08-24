@@ -43,7 +43,31 @@ func _input(ie):
 				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE);
 
 master func send_chat(id, msg):
-	if (msg == ""):
+	msg = str(msg).strip_edges();
+	
+	if (msg.length() <= 0):
+		return;
+	
+	if (msg.begins_with("/")):
+		msg = msg.substr(1, msg.length()-1);
+		msg = msg.split(" ", false);
+		
+		if (msg[0] == "online"):
+			if (id == get_tree().get_network_unique_id()):
+				add_message("Players Online:");
+			else:
+				rpc_id(id, "add_message", "Players Online:");
+			
+			var num = 0;
+			for i in gamestate.players.values():
+				num += 1;
+				if (id == get_tree().get_network_unique_id()):
+					add_message(str(num, ". ", i));
+				else:
+					rpc_id(id, "add_message", str(num, ". ", i));
+		
+		else:
+			rpc_id(id, "add_message", "Command not found.");
 		return;
 	
 	if (id == 1 && gamestate.sv_dedicated):
@@ -52,16 +76,24 @@ master func send_chat(id, msg):
 		msg = gamestate.players[id]+": "+msg;
 	
 	rpc("add_message", msg);
+	if (gamestate.sv_dedicated):
+		print("[Chat] ", msg);
 
 func broadcast_msg(msg):
 	if (!get_tree().is_network_server()):
 		return;
+	
 	rpc("add_message", msg);
+	if (gamestate.sv_dedicated):
+		print("[Chat] ", msg);
 
 func send_msg_to(id, msg):
 	if (!get_tree().is_network_server()):
 		return;
+	
 	rpc_id(id, "add_message", msg);
+	if (gamestate.sv_dedicated):
+		print("[Chat] ", msg);
 
 sync func add_message(msg):
 	if (messages.get_text() != ""):

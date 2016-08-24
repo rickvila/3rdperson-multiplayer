@@ -1,6 +1,6 @@
 extends Spatial
 
-var cam;
+var cam = null;
 var pitch = 0.0;
 var yaw = 0.0;
 var dist = 2.5;
@@ -11,7 +11,6 @@ var ray_res = {};
 var excl = [];
 var pos = Vector3();
 var target = Vector3();
-var aiming = false;
 
 func _init():
 	curRange = dist;
@@ -37,16 +36,12 @@ func _input(ie):
 	if (ie.type == InputEvent.MOUSE_MOTION):
 		pitch = clamp(pitch+ie.relative_y*sensitivity, -89.0, 89.0);
 		yaw = fmod(yaw-ie.relative_x*sensitivity, 360.0);
-	
-	if (ie.type == InputEvent.MOUSE_BUTTON):
-		if (ie.pressed && ie.button_index == BUTTON_RIGHT):
-			aiming = !aiming;
 
 func _process(delta):
 	var pivot = get_global_transform().origin;
 	var pr = 0.0;
 	var r = dist;
-	if (aiming):
+	if (get_parent().is_aiming):
 		r = 1.6;
 		pr = 0.8
 	curRange = lerp(curRange, r, 5*delta);

@@ -12,18 +12,23 @@ var chatmgr;
 var prefab_player;
 var prefab_freecam;
 
+var spawn_points;
+var spawn_delay;
 var players_path;
 
 func _init():
 	sv_dedicated = false;
 	cl_name = "";
 	cl_chatting = false;
+	spawn_points = [];
+	spawn_delay = 3.0;
 	players_path = "env/players/";
 	
 	reset_variables();
 
 func reset_variables():
 	players = {};
+	spawn_points = [];
 	cl_chatting = false;
 
 func _ready():
@@ -46,7 +51,11 @@ func _input(ie):
 
 func host_game(port, max_clients):
 	var net = NetworkedMultiplayerENet.new();
-	net.create_server(port, max_clients);
+	if (net.create_server(port, max_clients) != OK):
+		print("Cannot create a server on port ", port, "!");
+		return false;
+	
+	#net.set_compression_mode(net.COMPRESS_ZLIB);
 	get_tree().set_network_peer(net);
 	
 	if (sv_dedicated):
@@ -54,11 +63,19 @@ func host_game(port, max_clients):
 		print("Max clients: ", max_clients);
 	
 	create_world();
+	return true;
 
 func join_game(ip, port):
 	var net = NetworkedMultiplayerENet.new();
-	net.create_client(ip, port);
+	if (net.create_client(ip, port) != OK):
+		print("Cannot create a client on ip ", ip, " & port ", port, "!");
+		return false;
+	
+	#net.set_compression_mode(net.COMPRESS_ZLIB);
 	get_tree().set_network_peer(net);
+	
+	print("Connecting to ", ip, ":", port, "..");
+	return true;
 
 func end_game():
 	mainmenu.enable_control();
@@ -88,7 +105,7 @@ func _peer_disconnected(id):
 		players.erase(id);
 
 func _client_success():
-	rpc("player_ready", get_tree().get_network_unique_id(), cl_name);
+	rpc("player_joined", get_tree().get_network_unique_id(), cl_name);
 	mainmenu.hide();
 
 func _client_failed():
@@ -99,16 +116,18 @@ func _client_disconnected():
 	mainmenu.set_message("Disconnected from server.");
 	end_game();
 
-master func player_ready(id, name):
+master func player_joined(id, name):
 	if (!players.has(id) || players[id] != null || !get_tree().is_network_server()):
 		return;
 	
 	players[id] = name;
 	player_connected(id);
 
-func player_connected(id):
+master func player_ready(id):
+	if (!players.has(id) || players[id] == null || !get_tree().is_network_server()):
+		return;
+	
 	if (id != 1):
-		rpc_id(id, "create_world");
 		rpc_id(id, "clean_players");
 		
 		for i in world.get_node(players_path).get_children():
@@ -118,17 +137,19 @@ func player_connected(id):
 			var pos = i.get_global_transform().origin;
 			rpc_id(id, "spawn_player", pid, players[pid], pos);
 	
-	var spawn_pos = Vector3(rand_range(-5, 5), 1, rand_range(-5, 5));
+	var spawn_pos = get_random_spawnpoint();
 	rpc("spawn_player", id, players[id], spawn_pos);
 	
-	print("Player ",id," (", players[id], ") connected.");
-	chatmgr.broadcast_msg(str(players[id])+" connected.");
+	chatmgr.broadcast_msg(str(players[id], " connected."));
+
+func player_connected(id):
+	if (id != 1):
+		rpc_id(id, "create_world");
 
 func player_disconnected(id):
 	rpc("despawn_player", id);
 	
-	print("Player ",id," (", players[id], ") disconnected.");
-	chatmgr.broadcast_msg(str(players[id])+" disconnected.");
+	chatmgr.broadcast_msg(str(players[id], " disconnected."));
 
 remote func create_world():
 	world = load("res://scenes/world.tscn").instance();
@@ -140,22 +161,31 @@ func create_host_player():
 		return;
 	
 	_peer_connected(1);
-	player_ready(1, cl_name);
+	player_joined(1, cl_name);
+	player_ready(1);
+
+func setup_freecam():
+	var inst = prefab_freecam.instance();
+	inst.set_name("camera");
+	world.get_node("env").add_child(inst);
 
 func world_ready():
 	mainmenu.hide();
 	
-	if (!sv_dedicated):
-		create_host_player();
+	if (!get_tree().is_network_server()):
+		rpc("player_ready", get_tree().get_network_unique_id());
 	else:
-		var inst = prefab_freecam.instance();
-		inst.set_name("camera");
-		world.get_node("env").add_child(inst);
+		setup_spawnpoints();
+		
+		if (!sv_dedicated):
+			create_host_player();
+		else:
+			setup_freecam();
 
 remote func clean_players():
 	if (!world):
 		return;
-	for i in world.get_node(players_path).get_children():
+	for i in get_players():
 		i.queue_free();
 
 sync func spawn_player(id, name, pos = null):
@@ -186,3 +216,31 @@ func player_by_id(id):
 	if (!world.has_node(path)):
 		return null;
 	return world.get_node(path);
+
+func teleport_player(from, to):
+	var p1 = player_by_id(from);
+	var p2 = player_by_id(to);
+	
+	if (!p1 || !p2):
+		return;
+	
+	p1.set_global_transform(p2.get_global_transform());
+
+func setup_spawnpoints():
+	spawn_points.clear();
+	spawn_points.append(Vector3(0, 2, 0));
+	spawn_points.append(Vector3(2, 2, -3));
+	spawn_points.append(Vector3(1, 2, 4));
+	spawn_points.append(Vector3(2, 2, 2));
+	spawn_points.append(Vector3(3, 2, 1));
+
+func get_random_spawnpoint():
+	return spawn_points[int(rand_range(0, spawn_points.size()))];
+
+func get_players():
+	var ret = [];
+	for i in world.get_node(players_path).get_children():
+		if (!players.has(i.get_name().to_int())):
+			continue;
+		ret.append(i);
+	return ret;
