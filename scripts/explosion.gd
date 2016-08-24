@@ -12,5 +12,6 @@ func _process(delta):
 	time += delta;
 	
 	if (time > 2.0):
+		set_process(false);
 		queue_free();
 		return;

@@ -201,7 +201,6 @@ sync func spawn_missile(owner, pos, impulse):
 	inst.apply_impulse(Vector3(), impulse);
 	
 	if (get_tree().get_network_unique_id() == owner):
-		print("wew");
 		inst.add_collision_exception_with(self);
 	
 	if (get_tree().is_network_server()):
